@@ -163,6 +163,9 @@ class TechNeckDetector:
             y_right_shoulder = int(right_shoulder_coords.y * image_height)
             chin_shoulder_distance = abs(y_chin - ((y_left_shoulder + y_right_shoulder) // 2))
 
+            distance_ratio = cheek_distance / chin_shoulder_distance
+            if self.tech_neck_threshold is not None and distance_ratio > self.tech_neck_threshold * 1.2:
+                print("TECH NECK!!!")
             return cheek_distance, chin_shoulder_distance
         else:
             return None
