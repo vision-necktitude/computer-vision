@@ -103,8 +103,8 @@ class EyeBlinkDetector:
         timer = self.eyeCloseChecker
 
         if ear is not None:
-            # EAR 값이 0.19 이하인 경우
-            if ear < 0.19:
+            # EAR 값이 0.36 이하인 경우
+            if ear < 0.36:
                 # 현재 눈 감음 상태가 아닌 경우
                 if not self.pre_blink_state:
                     self.pre_blink_state = True
