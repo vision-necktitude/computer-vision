@@ -7,6 +7,7 @@ import time
 import mediapipe as mp
 import cv2
 from scipy.spatial import distance
+
 # import ray
 
 CHIN = 152
@@ -18,6 +19,7 @@ RIGHT_CHEEK = 454
 # 어깨 관련 특징점 인덱스
 LEFT_SHOULDER = 11
 RIGHT_SHOULDER = 12
+
 
 # @ray.remote
 class EyeBlinkDetector:
@@ -78,7 +80,8 @@ class EyeBlinkDetector:
             eye_bottom_y = int(results.face_landmarks.landmark[145].y * image.shape[0])
             eye_right_x = int(results.face_landmarks.landmark[133].x * image.shape[1])
             eye_right_y = int(results.face_landmarks.landmark[133].y * image.shape[0])
-            left_eye = (eye_top_x, eye_top_y, eye_bottom_x, eye_bottom_y, eye_left_x, eye_left_y, eye_right_x, eye_right_y)
+            left_eye = (
+            eye_top_x, eye_top_y, eye_bottom_x, eye_bottom_y, eye_left_x, eye_left_y, eye_right_x, eye_right_y)
             return left_eye
 
     def getRightEye(self, image):
@@ -92,7 +95,8 @@ class EyeBlinkDetector:
             eye_bottom_y = int(results.face_landmarks.landmark[374].y * image.shape[0])
             eye_right_x = int(results.face_landmarks.landmark[263].x * image.shape[1])
             eye_right_y = int(results.face_landmarks.landmark[263].y * image.shape[0])
-            right_eye = (eye_top_x, eye_top_y, eye_bottom_x, eye_bottom_y, eye_left_x, eye_left_y, eye_right_x, eye_right_y)
+            right_eye = (
+            eye_top_x, eye_top_y, eye_bottom_x, eye_bottom_y, eye_left_x, eye_left_y, eye_right_x, eye_right_y)
             return right_eye
 
     def close(self, frame):
@@ -124,6 +128,16 @@ class TechNeckDetector:
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_holistic = mp.solutions.holistic
         self.holistic = self.mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+        self.has_run = False
+        self.initial_cheek_distance = 0
+        self.initial_chin_shoulder_distance = 0
+        self.tech_neck_threshold = 0
+
+    def setInitialLength(self, cheek, chin_shoulder):
+        time.sleep(3)
+        self.initial_cheek_distance = cheek
+        self.initial_chin_shoulder_distance = chin_shoulder
+        self.tech_neck_threshold = self.initial_cheek_distance / self.initial_chin_shoulder_distance
 
     def detect_tech_neck(self, frame):
         image_height, image_width, _ = frame.shape
@@ -161,8 +175,13 @@ class TechNeckDetector:
                         2)
             cv2.putText(frame, f"Chin-Shoulder Distance: {chin_shoulder_distance}", (20, 150), cv2.FONT_HERSHEY_SIMPLEX,
                         1, (0, 255, 0), 2)
+            if not self.has_run:
+                self.setInitialLength(cheek_distance, chin_shoulder_distance)
+                self.has_run = True
+            # print("initial: {}, {}".format(self.initial_cheek_distance, self.initial_chin_shoulder_distance))
 
         return frame
+
 
 class EyeCloseChecker:
     def __init__(self):
@@ -200,13 +219,13 @@ def main():
         # frame = ray.get(tech_neck_detector.detect_and_draw_tech_neck.remote(frame))
 
         cv2.imshow("Combined Model", frame)
-
         if cv2.waitKey(5) & 0xFF == 27:
             break
 
     cap.release()
     cv2.destroyAllWindows()
     # ray.shutdown()
+
 
 if __name__ == '__main__':
     main()
