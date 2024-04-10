@@ -15,7 +15,7 @@ class EyeBlinkDetector:
         self.blinkCount = 0
         self.pre_blink_state = False
         self.eyeBlinkChecker = EyeBlinkChecker()
-        self.timerInterval = 10
+        self.timerInterval = 60
 
     def calculate_EAR(self, eye):
         a = distance.euclidean((eye[0], eye[1]), (eye[2], eye[3]))
@@ -97,12 +97,15 @@ class EyeBlinkDetector:
                     timer.startClose()
             else:
                 self.pre_blink_state = False
-                print(timer.endClose())
+                timer.endClose()
+                # print(f"blink time: {timer.endClose()}")
 
         cv2.putText(frame, f"Blink Count: {self.blinkCount}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         return frame
 
     def detectEyeCloseForDuration(self):
+        print(f"max eye blink: {self.eyeBlinkChecker.maxBlinkDuration}")
+        self.eyeBlinkChecker.resetBlinkDurations()
         timer_thread = threading.Timer(self.timerInterval, self.detectEyeCloseForDuration)
         timer_thread.start()
 
@@ -116,10 +119,19 @@ class EyeBlinkChecker:
     def __init__(self):
         self.startTime = 0
         self.endTime = 0
+        self.blinkDurations = []  # 눈 깜빡임 시간을 기록하는 리스트
+        self.maxBlinkDuration = 0  # 최대 눈 깜빡임 시간
 
     def startClose(self):
         self.startTime = time.time()
 
     def endClose(self):
         self.endTime = time.time()
-        return round(self.startTime - self.endTime)
+        blinkDuration = round(self.endTime - self.startTime, 2)
+        self.blinkDurations.append(blinkDuration)  # 깜빡임 시간을 리스트에 추가
+        self.maxBlinkDuration = max(self.maxBlinkDuration, blinkDuration)  # 최대 깜빡임 시간 갱신
+        return blinkDuration
+
+    def resetBlinkDurations(self):
+        self.blinkDurations.clear()  # 깜빡임 시간 리스트 초기화
+        self.maxBlinkDuration = 0  # 최대 깜빡임 시간 초기화
