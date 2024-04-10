@@ -2,16 +2,20 @@ import mediapipe as mp
 import cv2
 
 import time
+import threading
 from scipy.spatial import distance
+
+pastEyeBlinkCount = 0
 
 class EyeBlinkDetector:
     def __init__(self):
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_holistic = mp.solutions.holistic
         self.holistic = self.mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5)
-        self.blink_count = 0
+        self.blinkCount = 0
         self.pre_blink_state = False
-        self.eyeCloseChecker = EyeCloseChecker()
+        self.eyeBlinkChecker = EyeBlinkChecker()
+        self.timerInterval = 10
 
     def calculate_EAR(self, eye):
         a = distance.euclidean((eye[0], eye[1]), (eye[2], eye[3]))
@@ -81,7 +85,7 @@ class EyeBlinkDetector:
 
     def detect_and_count_blinks(self, frame):
         ear = self.detect_eye_blink(frame)
-        timer = self.eyeCloseChecker
+        timer = self.eyeBlinkChecker
 
         if ear is not None:
             # EAR 값이 0.36 이하인 경우
@@ -89,16 +93,26 @@ class EyeBlinkDetector:
                 # 현재 눈 감음 상태가 아닌 경우
                 if not self.pre_blink_state:
                     self.pre_blink_state = True
-                    self.blink_count += 1
+                    self.blinkCount += 1
                     timer.startClose()
             else:
                 self.pre_blink_state = False
                 print(timer.endClose())
 
-        cv2.putText(frame, f"Blink Count: {self.blink_count}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(frame, f"Blink Count: {self.blinkCount}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         return frame
 
-class EyeCloseChecker:
+    def detectEyeCloseForDuration(self):
+        timer_thread = threading.Timer(self.timerInterval, self.detectEyeCloseForDuration)
+        timer_thread.start()
+
+        global pastEyeBlinkCount
+        nowEyeBlinkCount = self.blinkCount
+        count = nowEyeBlinkCount - pastEyeBlinkCount
+        pastEyeBlinkCount = nowEyeBlinkCount
+        print(f"eye blink count: {count}")
+
+class EyeBlinkChecker:
     def __init__(self):
         self.startTime = 0
         self.endTime = 0

@@ -19,6 +19,7 @@ def main():
     tech_neck_detector = TechNeckDetector()
 
     tech_neck_detector.detectTechNeckForDuration()
+    eye_blink_detector.detectEyeCloseForDuration()
 
     while is_running:
         _, frame = cap.read()

@@ -33,7 +33,7 @@ class TechNeckDetector:
         self.initial_chin_shoulder_distance = 0
         self.tech_neck_threshold = 0
         self.techNeckCount = 0
-        self.timerInterval = 30
+        self.timerInterval = 60
 
     def setInitialLength(self, cheek, chin_shoulder):
         time.sleep(3)
@@ -119,15 +119,3 @@ class TechNeckDetector:
             count = nowTeckNeckCount - pastTeckNeckCount
         pastTeckNeckCount = nowTeckNeckCount
         print(f"tech count: {count}")
-
-        # timer_thread = threading.Timer(self.timer_interval, self.detectTechNeckForDuration)
-        # timer_thread.start()
-        # end_time = time.time() + duration
-
-        # while time.time() < end_time:
-        #     ret, frame = cap.read()
-        #     if not ret:
-        #         break
-
-        # print(f"Tech neck count: {tech_neck_count}")
-        # self.server_communicator.send_data("tech_neck_count", {"count": tech_neck_count})
